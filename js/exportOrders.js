@@ -22,7 +22,13 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 
 const TIMEZONE = "Asia/Kolkata";
-const endTime = dayjs().tz(TIMEZONE).hour(20).minute(30).second(0).millisecond(0);
+const nowIST = dayjs().tz(TIMEZONE);
+const today830IST = nowIST.hour(20).minute(30).second(0).millisecond(0);
+
+const endTime = nowIST.isBefore(today830IST)
+  ? today830IST.subtract(1, 'day')
+  : today830IST;
+
 const startTime = endTime.subtract(1, 'day');
 
 const formattedStart = startTime.toISOString();
