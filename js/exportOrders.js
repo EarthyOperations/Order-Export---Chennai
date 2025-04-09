@@ -31,11 +31,11 @@ const endTime = nowIST.isBefore(today830IST)
 
 const startTime = endTime.clone().subtract(1, 'day');
 
-console.log("🕒 START:", formattedStart);
-console.log("🕒 END:", formattedEnd);
 
 const formattedStart = startTime.toISOString();
 const formattedEnd = endTime.toISOString();
+console.log("🕒 START:", formattedStart);
+console.log("🕒 END:", formattedEnd);
 
 console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
