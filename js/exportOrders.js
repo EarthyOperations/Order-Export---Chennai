@@ -29,7 +29,10 @@ const endTime = nowIST.isBefore(today830IST)
   ? today830IST.subtract(1, 'day')
   : today830IST;
 
-const startTime = endTime.clone().subtract(1, 'day'); // ✅ Important: clone!
+const startTime = endTime.clone().subtract(1, 'day');
+
+console.log("🕒 START:", formattedStart);
+console.log("🕒 END:", formattedEnd);
 
 const formattedStart = startTime.toISOString();
 const formattedEnd = endTime.toISOString();
