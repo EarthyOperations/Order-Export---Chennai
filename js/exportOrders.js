@@ -5,14 +5,13 @@ import nodemailer from 'nodemailer';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
-
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// GitHub Secrets via process.env
 const SHOP = process.env.SHOP;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const CITY_FILTERS = ["Chennai", "Kanchipuram", "Tiruvallur"];
@@ -23,23 +22,22 @@ const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 const TIMEZONE = "Asia/Kolkata";
 const nowIST = dayjs().tz(TIMEZONE);
 
-// Today at 8:30 PM IST
-const today830IST = nowIST.hour(20).minute(30).second(0).millisecond(0);
+// Always set 08:30 PM IST of today
+const today830IST = dayjs().tz(TIMEZONE).hour(20).minute(30).second(0).millisecond(0);
 
-// Determine report time range
-const endTime = nowIST.isBefore(today830IST)
-  ? today830IST.subtract(1, 'day')
-  : today830IST;
-const startTime = endTime.clone().subtract(1, 'day');
+// If current time is before 08:30 PM, we want the last window (i.e., yesterday 08:30 PM to today 08:30 PM)
+const endTimeIST = nowIST.isBefore(today830IST) ? today830IST : today830IST;
+const startTimeIST = endTimeIST.subtract(1, 'day');
 
-// For API: fetch from 2 days ago till today 8:30PM
-const apiFetchStart = endTime.clone().subtract(2, 'day').toISOString();
-const apiFetchEnd = endTime.toISOString();
+// Convert to UTC for Shopify API
+const formattedStart = startTimeIST.utc().format();
+const formattedEnd = endTimeIST.utc().format();
 
-console.log("🕒 API Fetch Range:", apiFetchStart, "→", apiFetchEnd);
-console.log("📊 Filtering Orders from:", startTime.toISOString(), "→", endTime.toISOString());
+console.log("🕒 START:", formattedStart);
+console.log("🕒 END:", formattedEnd);
+console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
-const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${apiFetchStart}&created_at_max=${apiFetchEnd}`;
+const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}`;
 
 async function fetchOrders() {
   const response = await fetch(ordersUrl, {
@@ -61,12 +59,7 @@ async function fetchOrders() {
 function filterOrdersByCities(orders) {
   return orders.filter(order => {
     const city = order.shipping_address?.city?.toLowerCase();
-    const inCityList = CITY_FILTERS.map(c => c.toLowerCase()).includes(city);
-
-    const createdAt = dayjs(order.created_at).tz(TIMEZONE);
-    const inTimeRange = createdAt.isAfter(startTime) && createdAt.isBefore(endTime);
-
-    return inCityList && inTimeRange;
+    return CITY_FILTERS.map(c => c.toLowerCase()).includes(city);
   });
 }
 
@@ -93,7 +86,7 @@ async function generateExcel(orders) {
     });
   });
 
-  const timestamp = startTime.format("YYYY-MM-DD-HH-mm");
+  const timestamp = startTimeIST.format("YYYY-MM-DD-HH-mm");
   const filename = `order-report-${timestamp}.xlsx`;
   await workbook.xlsx.writeFile(filename);
   console.log(`✅ Report generated: ${filename}`);
@@ -128,7 +121,11 @@ async function sendEmailWithAttachment(filePath) {
 async function run() {
   try {
     const allOrders = await fetchOrders();
+    console.log("📥 Total Orders Fetched:", allOrders.length);
+
     const filteredOrders = filterOrdersByCities(allOrders);
+    console.log("✅ Orders After City Filter:", filteredOrders.length);
+
     const filePath = await generateExcel(filteredOrders);
     await sendEmailWithAttachment(filePath);
   } catch (err) {
