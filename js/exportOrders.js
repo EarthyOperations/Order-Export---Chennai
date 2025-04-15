@@ -9,7 +9,6 @@ import timezone from 'dayjs/plugin/timezone.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -23,23 +22,24 @@ const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 
 const TIMEZONE = "Asia/Kolkata";
 const nowIST = dayjs().tz(TIMEZONE);
+
+// Today at 8:30 PM IST
 const today830IST = nowIST.hour(20).minute(30).second(0).millisecond(0);
 
+// Determine report time range
 const endTime = nowIST.isBefore(today830IST)
   ? today830IST.subtract(1, 'day')
   : today830IST;
-
 const startTime = endTime.clone().subtract(1, 'day');
 
+// For API: fetch from 2 days ago till today 8:30PM
+const apiFetchStart = endTime.clone().subtract(2, 'day').toISOString();
+const apiFetchEnd = endTime.toISOString();
 
-const formattedStart = startTime.toISOString();
-const formattedEnd = endTime.toISOString();
-console.log("🕒 START:", formattedStart);
-console.log("🕒 END:", formattedEnd);
+console.log("🕒 API Fetch Range:", apiFetchStart, "→", apiFetchEnd);
+console.log("📊 Filtering Orders from:", startTime.toISOString(), "→", endTime.toISOString());
 
-console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
-
-const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}`;
+const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${apiFetchStart}&created_at_max=${apiFetchEnd}`;
 
 async function fetchOrders() {
   const response = await fetch(ordersUrl, {
@@ -61,7 +61,12 @@ async function fetchOrders() {
 function filterOrdersByCities(orders) {
   return orders.filter(order => {
     const city = order.shipping_address?.city?.toLowerCase();
-    return CITY_FILTERS.map(c => c.toLowerCase()).includes(city);
+    const inCityList = CITY_FILTERS.map(c => c.toLowerCase()).includes(city);
+
+    const createdAt = dayjs(order.created_at).tz(TIMEZONE);
+    const inTimeRange = createdAt.isAfter(startTime) && createdAt.isBefore(endTime);
+
+    return inCityList && inTimeRange;
   });
 }
 
