@@ -58,7 +58,7 @@ async function fetchOrders() {
 
 function filterOrdersByCities(orders) {
   return orders.filter(order => {
-    const city = order.shipping_address?.city?.toLowerCase();
+    const city = order.shipping_address?.city?.trim().toLowerCase(); // trim and lowercase
     const isCityMatch = CITY_FILTERS.map(c => c.toLowerCase()).includes(city);
     const isNotCancelled = order.cancelled_at === null;
     return isCityMatch && isNotCancelled;
