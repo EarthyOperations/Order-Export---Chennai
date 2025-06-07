@@ -6,12 +6,12 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import dotenv from 'dotenv';
-dotenv.config();
 
+dotenv.config();
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// ENV config
+// Env config
 const SHOP = process.env.SHOP;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const CITY_FILTERS = ["Bangalore", "Bengaluru"];
@@ -22,11 +22,11 @@ const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 // Time range: yesterday 00:00 IST to today 00:00 IST
 const TIMEZONE = "Asia/Kolkata";
 const nowIST = dayjs().tz(TIMEZONE);
-const todayStartIST = nowIST.startOf('day'); // Today 00:00
-const yesterdayStartIST = todayStartIST.subtract(1, 'day'); // Yesterday 00:00
+const todayStartIST = nowIST.startOf('day');
+const yesterdayStartIST = todayStartIST.subtract(1, 'day');
 
-const formattedStart = yesterdayStartIST.toISOString(); // UTC
-const formattedEnd = todayStartIST.toISOString(); // UTC
+const formattedStart = yesterdayStartIST.toISOString();
+const formattedEnd = todayStartIST.toISOString();
 
 console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
@@ -82,13 +82,15 @@ async function generateExcel(orders) {
     { header: "Quantity", key: "quantity", width: 10 },
     { header: "City", key: "city", width: 15 },
     { header: "Phone", key: "phone", width: 15 },
-    { header: "Full Address", key: "address", width: 50 }
+    { header: "Full Address", key: "address", width: 50 },
+    { header: "Financial Status", key: "financial_status", width: 20 }
   ];
 
   orders.forEach(order => {
     const city = order.shipping_address?.city || '';
     const fullAddress = formatFullAddress(order.shipping_address);
     const phone = order.shipping_address?.phone || order.phone || '';
+    const financialStatus = order.financial_status;
 
     order.line_items.forEach(item => {
       sheet.addRow({
@@ -97,7 +99,8 @@ async function generateExcel(orders) {
         quantity: item.quantity,
         city: city,
         phone: phone,
-        address: fullAddress
+        address: fullAddress,
+        financial_status: financialStatus
       });
     });
   });
