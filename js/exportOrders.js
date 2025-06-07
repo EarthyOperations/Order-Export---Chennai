@@ -14,7 +14,7 @@ dayjs.extend(timezone);
 // ENV config
 const SHOP = process.env.SHOP;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const CITY_FILTERS = ["Bangalore","Bengaluru"];
+const CITY_FILTERS = ["Bangalore", "Bengaluru"];
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
@@ -28,7 +28,7 @@ const yesterdayStartIST = todayStartIST.subtract(1, 'day'); // Yesterday 00:00
 const formattedStart = yesterdayStartIST.toISOString(); // UTC
 const formattedEnd = todayStartIST.toISOString(); // UTC
 
-console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for city: ${CITY_FILTERS[0]}`);
+console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
 const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}`;
 
@@ -77,24 +77,26 @@ async function generateExcel(orders) {
   const sheet = workbook.addWorksheet("Orders");
 
   sheet.columns = [
-    { header: "Order ID", key: "order_id", width: 20 },
-    { header: "Order Number", key: "order_number", width: 15 },
+    { header: "Order Number", key: "order_number", width: 20 },
     { header: "Product Title", key: "title", width: 30 },
     { header: "Quantity", key: "quantity", width: 10 },
     { header: "City", key: "city", width: 15 },
+    { header: "Phone", key: "phone", width: 15 },
     { header: "Full Address", key: "address", width: 50 }
   ];
 
   orders.forEach(order => {
     const city = order.shipping_address?.city || '';
     const fullAddress = formatFullAddress(order.shipping_address);
+    const phone = order.shipping_address?.phone || order.phone || '';
+
     order.line_items.forEach(item => {
       sheet.addRow({
-        order_id: order.id,
         order_number: order.name,
         title: item.title,
         quantity: item.quantity,
         city: city,
+        phone: phone,
         address: fullAddress
       });
     });
@@ -120,7 +122,7 @@ async function sendEmailWithAttachment(filePath) {
     from: `"Order Bot" <${EMAIL_USER}>`,
     to: EMAIL_TO,
     subject: "📦 Bangalore Orders Report",
-    text: "Please find the attached Excel report for Bangalore orders.",
+    text: "Please find the attached Excel report for Bangalore/Bengaluru orders.",
     attachments: [
       {
         filename: filePath,
