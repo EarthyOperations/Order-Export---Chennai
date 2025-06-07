@@ -19,7 +19,7 @@ const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 
-// Time range: yesterday 00:00 IST to today 00:00 IST
+// Timezone & date setup
 const TIMEZONE = "Asia/Kolkata";
 const nowIST = dayjs().tz(TIMEZONE);
 const todayStartIST = nowIST.startOf('day');
@@ -83,7 +83,8 @@ async function generateExcel(orders) {
     { header: "City", key: "city", width: 15 },
     { header: "Phone", key: "phone", width: 15 },
     { header: "Full Address", key: "address", width: 50 },
-    { header: "Financial Status", key: "financial_status", width: 20 }
+    { header: "Financial Status", key: "financial_status", width: 20 },
+    { header: "Total Price (₹)", key: "total_price", width: 15 }
   ];
 
   orders.forEach(order => {
@@ -91,6 +92,7 @@ async function generateExcel(orders) {
     const fullAddress = formatFullAddress(order.shipping_address);
     const phone = order.shipping_address?.phone || order.phone || '';
     const financialStatus = order.financial_status;
+    const totalPrice = order.total_price;
 
     order.line_items.forEach(item => {
       sheet.addRow({
@@ -100,7 +102,8 @@ async function generateExcel(orders) {
         city: city,
         phone: phone,
         address: fullAddress,
-        financial_status: financialStatus
+        financial_status: financialStatus,
+        total_price: totalPrice
       });
     });
   });
