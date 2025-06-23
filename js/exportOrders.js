@@ -22,15 +22,15 @@ const EMAIL_TO = process.env.RECEIVER_EMAILS.split(',');
 // Timezone & date setup
 const TIMEZONE = "Asia/Kolkata";
 const nowIST = dayjs().tz(TIMEZONE);
-const todayStartIST = nowIST.startOf('day');
-const yesterdayStartIST = todayStartIST.subtract(1, 'day');
+const todayStartIST = nowIST.startOf('day'); // Today 12:00 AM
+const yesterdayStartIST = todayStartIST.subtract(1, 'day'); // Yesterday 12:00 AM
 
-const formattedStart = yesterdayStartIST.toISOString();
-const formattedEnd = todayStartIST.toISOString();
+const formattedStart = yesterdayStartIST.toISOString(); // yesterday 12:00 AM
+const formattedEnd = todayStartIST.toISOString(); // today 12:00 AM
 
-console.log(`📦 Fetching orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
+console.log(`📦 Fetching UNFULFILLED orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
-const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}`;
+const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}&fulfillment_status=unfulfilled`;
 
 async function fetchOrders() {
   const response = await fetch(ordersUrl, {
@@ -109,7 +109,7 @@ async function generateExcel(orders) {
   });
 
   const timestamp = yesterdayStartIST.format("YYYY-MM-DD");
-  const filename = `bangalore-orders-${timestamp}.xlsx`;
+  const filename = `unfulfilled-bangalore-orders-${timestamp}.xlsx`;
   await workbook.xlsx.writeFile(filename);
   console.log(`✅ Report generated: ${filename}`);
   return filename;
@@ -127,8 +127,8 @@ async function sendEmailWithAttachment(filePath) {
   const info = await transporter.sendMail({
     from: `"Order Bot" <${EMAIL_USER}>`,
     to: EMAIL_TO,
-    subject: "📦 Bangalore Orders Report",
-    text: "Please find the attached Excel report for Bangalore/Bengaluru orders.",
+    subject: "📦 Unfulfilled Bangalore Orders Report",
+    text: "Please find the attached Excel report for unfulfilled Bangalore/Bengaluru orders from the last 24 hours.",
     attachments: [
       {
         filename: filePath,
@@ -144,6 +144,10 @@ async function run() {
   try {
     const allOrders = await fetchOrders();
     const filteredOrders = filterOrdersByCity(allOrders);
+    if (filteredOrders.length === 0) {
+      console.log("ℹ️ No unfulfilled orders found for the specified cities.");
+      return;
+    }
     const filePath = await generateExcel(filteredOrders);
     await sendEmailWithAttachment(filePath);
   } catch (err) {
