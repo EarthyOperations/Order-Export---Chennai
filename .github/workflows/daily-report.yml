@@ -2,7 +2,7 @@ name: Daily Order Report
 
 on:
   schedule:
-    - cron: '30 1 * * *'  # Runs at 07:00 AM IST
+    - cron: '30 0 * * *'  # Runs at 07:00 AM IST
   workflow_dispatch:
 
 jobs:
