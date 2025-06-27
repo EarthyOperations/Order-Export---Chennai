@@ -30,6 +30,9 @@ const formattedEnd = todayStartIST.toISOString(); // today 12:00 AM
 
 console.log(`📦 Fetching UNFULFILLED orders from ${formattedStart} to ${formattedEnd} for cities: ${CITY_FILTERS.join(", ")}`);
 
+const currentTimeIST = dayjs().tz(TIMEZONE);
+console.log("🕒 Script started at:", currentTimeIST.format("YYYY-MM-DD HH:mm:ss"));
+
 const ordersUrl = `https://${SHOP}.myshopify.com/admin/api/2023-10/orders.json?status=any&created_at_min=${formattedStart}&created_at_max=${formattedEnd}&fulfillment_status=unfulfilled`;
 
 async function fetchOrders() {
