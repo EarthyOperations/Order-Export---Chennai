@@ -131,7 +131,7 @@ async function sendEmailWithAttachment(filePath) {
     from: `"Order Bot" <${EMAIL_USER}>`,
     to: EMAIL_TO,
     subject: "📦 Unfulfilled Bangalore Orders Report",
-    text: "Please find the attached Excel report for unfulfilled Bangalore/Bengaluru orders from the last 24 hours.",
+    text: "Please find the attached Excel report for unfulfilled Bangalore orders from the last 24 hours.",
     attachments: [
       {
         filename: filePath,
