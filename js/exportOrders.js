@@ -267,7 +267,7 @@ async function sendEmailWithAttachment(filePath) {
     from: `"Order Bot" <${EMAIL_USER}>`,
     to: EMAIL_TO,
     subject: `📦 Unfulfilled Bangalore Orders Report — ${dateLabel}`,
-    text: `Attached: Excel report for strictly unfulfilled Bangalore/Bengaluru orders created between ${formattedStart} and ${formattedEnd} (IST window).`,
+    text: `Attached: Excel report for unfulfilled Bangalore/Bengaluru orders created ${dateLabel}.`,
     attachments: [
       {
         filename: path.basename(filePath),
@@ -292,7 +292,7 @@ async function run() {
     const filteredOrders = filterOrdersByCityAndUnfulfilled(allOrders);
 
     if (filteredOrders.length === 0) {
-      console.log('ℹ️ No strictly unfulfilled orders found for the specified cities and window.');
+      console.log('ℹ️ No unfulfilled orders found for the specified cities and window.');
       return;
     }
 
